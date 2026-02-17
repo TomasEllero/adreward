@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Casino Test - AdReward</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #1a1a1a;
+      color: #fff;
+    }
+    .casino-header {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      padding: 30px;
+      border-radius: 12px;
+      margin-bottom: 30px;
+    }
+    h1 {
+      margin: 0 0 10px 0;
+    }
+    .balance-box {
+      background: #2a2a2a;
+      padding: 20px;
+      border-radius: 8px;
+      margin-bottom: 20px;
+    }
+    .balance {
+      font-size: 2.5rem;
+      color: #C8FF00;
+      font-weight: bold;
+    }
+    button {
+      background: #C8FF00;
+      color: #000;
+      border: none;
+      padding: 15px 30px;
+      font-size: 16px;
+      font-weight: 600;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    button:hover {
+      background: #d4ff1a;
+      transform: translateY(-2px);
+    }
+    .info {
+      background: rgba(200,255,0,0.1);
+      border: 1px solid rgba(200,255,0,0.3);
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-size: 14px;
+    }
+    .log {
+      background: #2a2a2a;
+      padding: 15px;
+      border-radius: 8px;
+      margin-top: 20px;
+      font-family: monospace;
+      font-size: 12px;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+    .log-entry {
+      padding: 5px 0;
+      border-bottom: 1px solid #3a3a3a;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="casino-header">
+    <h1>🎰 Casino Demo</h1>
+    <p>Plataforma de prueba para AdReward</p>
+  </div>
+
+  <div class="balance-box">
+    <div style="color: #999; font-size: 14px; margin-bottom: 5px;">TU SALDO</div>
+    <div class="balance" id="balance">$0.00</div>
+  </div>
+
+  <button onclick="login()" id="login-btn">🔐 Simular Login de Usuario</button>
+
+  <div class="info">
+    <strong>ℹ️ Instrucciones:</strong><br>
+    1. Apretá "Simular Login" para activar el widget<br>
+    2. Se va a aparecer un botón verde flotante abajo a la derecha<br>
+    3. Click en el botón para abrir el widget de encuestas<br>
+    4. Completá las encuestas y tu saldo se actualiza automáticamente
+  </div>
+
+  <div class="log">
+    <strong>📋 Log de eventos:</strong>
+    <div id="log"></div>
+  </div>
+
+  <!-- WIDGET DE ADREWARD -->
+  <script
+    src="https://adreward-production.up.railway.app/widget.js"
+    data-key="demo_platform_key_123"
+    data-credit-amount="0.20"
+    data-currency="USD"
+    data-server-url="https://adreward-production.up.railway.app"
+    async
+  ></script>
+
+  <script>
+    // Funciones del casino
+    function login() {
+      const userId = 'usuario_test_' + Date.now();
+      AdReward.setUser(userId);
+      
+      addLog('✅ Usuario logueado: ' + userId);
+      addLog('🎯 Widget activado - Mirá abajo a la derecha');
+      
+      document.getElementById('login-btn').textContent = '✓ Sesión activa';
+      document.getElementById('login-btn').disabled = true;
+      document.getElementById('login-btn').style.opacity = '0.5';
+    }
+
+    // Escuchar cuando el usuario gana créditos
+    document.addEventListener('adreward:completed', (e) => {
+      const { userId, creditAmount, currency } = e.detail;
+      
+      // Actualizar saldo
+      const currentBalance = parseFloat(document.getElementById('balance').textContent.replace('$', ''));
+      const newBalance = currentBalance + parseFloat(creditAmount);
+      document.getElementById('balance').textContent = '$' + newBalance.toFixed(2);
+      
+      // Log
+      addLog('💰 ¡Crédito acreditado! +' + currency + ' ' + creditAmount);
+      addLog('💳 Nuevo saldo: $' + newBalance.toFixed(2));
+      
+      // Alert visual
+      alert('¡Felicitaciones!\n\nGanaste ' + currency + ' ' + creditAmount + '\n\nTu nuevo saldo es: $' + newBalance.toFixed(2));
+    });
+
+    function addLog(message) {
+      const log = document.getElementById('log');
+      const entry = document.createElement('div');
+      entry.className = 'log-entry';
+      const time = new Date().toLocaleTimeString();
+      entry.textContent = '[' + time + '] ' + message;
+      log.insertBefore(entry, log.firstChild);
+    }
+
+    // Log inicial
+    addLog('🚀 Casino cargado - Esperando login');
+  </script>
+
+</body>
+</html>
