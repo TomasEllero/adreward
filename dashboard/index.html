@@ -1,0 +1,294 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>AdReward — Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  :root {
+    --black: #080A0F; --surface: #0E1118; --surface2: #151820;
+    --border: rgba(255,255,255,0.07); --white: #F0F2F7;
+    --muted: #7A8099; --accent: #C8FF00;
+  }
+  body { background: var(--black); color: var(--white); font-family: 'DM Sans', sans-serif; font-weight: 300; min-height: 100vh; }
+
+  header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 20px 40px;
+    display: flex; align-items: center; justify-content: space-between;
+  }
+  .logo { font-family: 'Syne', sans-serif; font-weight: 800; font-size: 1.2rem; }
+  .logo span { color: var(--accent); }
+  .header-right { display: flex; align-items: center; gap: 16px; }
+  .status-dot { width: 8px; height: 8px; background: var(--accent); border-radius: 50%; animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100%{opacity:1}50%{opacity:0.4} }
+  .status-txt { font-size: 0.8rem; color: var(--muted); }
+
+  .login-screen {
+    max-width: 400px; margin: 80px auto; padding: 48px;
+    background: var(--surface); border: 1px solid var(--border); border-radius: 16px;
+  }
+  .login-screen h2 { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 1.5rem; margin-bottom: 8px; }
+  .login-screen p { color: var(--muted); font-size: 0.9rem; margin-bottom: 28px; }
+  .field { margin-bottom: 16px; }
+  .field label { display: block; font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 6px; }
+  .field input {
+    width: 100%; background: var(--black); border: 1px solid var(--border);
+    color: var(--white); padding: 12px 16px; border-radius: 8px;
+    font-family: 'DM Sans', sans-serif; font-size: 0.95rem; outline: none;
+    transition: border-color 0.2s;
+  }
+  .field input:focus { border-color: rgba(200,255,0,0.4); }
+  .btn {
+    width: 100%; background: var(--accent); color: var(--black); border: none;
+    padding: 14px; border-radius: 8px; font-family: 'Syne', sans-serif;
+    font-weight: 700; font-size: 0.9rem; letter-spacing: 0.05em; cursor: pointer;
+    text-transform: uppercase; transition: all 0.2s;
+  }
+  .btn:hover { background: #d4ff1a; transform: translateY(-1px); }
+
+  main { padding: 40px; display: none; }
+
+  .grid-4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 32px; }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 28px 24px;
+    transition: border-color 0.2s;
+  }
+  .stat-card:hover { border-color: rgba(200,255,0,0.2); }
+  .stat-card .label { font-size: 0.75rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; margin-bottom: 12px; }
+  .stat-card .value { font-family: 'Syne', sans-serif; font-weight: 700; font-size: 2rem; color: var(--accent); letter-spacing: -0.03em; line-height: 1; }
+  .stat-card .sub { font-size: 0.8rem; color: var(--muted); margin-top: 6px; }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+
+  .card {
+    background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 32px;
+  }
+  .card h3 { font-family: 'Syne', sans-serif; font-weight: 600; font-size: 0.9rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 24px; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th { font-size: 0.72rem; color: var(--muted); text-transform: uppercase; letter-spacing: 0.1em; text-align: left; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+  td { padding: 14px 0; border-bottom: 1px solid var(--border); font-size: 0.875rem; color: var(--muted); }
+  td:first-child { color: var(--white); font-weight: 500; }
+  tr:last-child td { border-bottom: none; }
+  .badge {
+    display: inline-block; padding: 3px 10px; border-radius: 100px; font-size: 0.72rem; font-weight: 500;
+  }
+  .badge.success { background: rgba(200,255,0,0.1); color: var(--accent); border: 1px solid rgba(200,255,0,0.2); }
+  .badge.pending { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+
+  .embed-box {
+    background: var(--black); border: 1px solid var(--border); border-radius: 10px;
+    padding: 20px; font-family: monospace; font-size: 0.8rem; line-height: 1.8;
+    color: var(--muted); word-break: break-all; position: relative;
+  }
+  .embed-box .tag { color: #63b3ed; }
+  .embed-box .attr { color: #C8FF00; }
+  .copy-embed {
+    position: absolute; top: 12px; right: 12px;
+    background: var(--surface2); border: 1px solid var(--border); color: var(--muted);
+    padding: 5px 12px; border-radius: 6px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.75rem; cursor: pointer; transition: all 0.2s;
+  }
+  .copy-embed:hover { color: var(--white); }
+
+  .refresh-btn {
+    background: transparent; border: 1px solid var(--border); color: var(--muted);
+    padding: 8px 16px; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+    font-size: 0.8rem; cursor: pointer; transition: all 0.2s;
+  }
+  .refresh-btn:hover { color: var(--white); border-color: rgba(255,255,255,0.2); }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo">Ad<span>Reward</span> <span style="color:var(--muted);font-size:0.75rem;font-weight:400;margin-left:8px;">Dashboard</span></div>
+  <div class="header-right">
+    <div class="status-dot"></div>
+    <span class="status-txt">Live</span>
+    <button class="refresh-btn" onclick="loadStats()">↻ Actualizar</button>
+  </div>
+</header>
+
+<!-- LOGIN -->
+<div id="login-screen" style="padding: 40px;">
+  <div class="login-screen">
+    <h2>Ingresar al dashboard</h2>
+    <p>Ingresá tu Platform Key para ver tus estadísticas.</p>
+    <div class="field">
+      <label>Platform Key</label>
+      <input type="text" id="platform-key-input" placeholder="pk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx">
+    </div>
+    <button class="btn" onclick="login()">Ver mis stats →</button>
+    <p style="text-align:center; margin-top: 16px; font-size: 0.8rem; color: var(--muted);">Demo: usar <strong style="color:var(--white)">demo_platform_key_123</strong></p>
+  </div>
+</div>
+
+<!-- DASHBOARD -->
+<main id="dashboard">
+  <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 32px;">
+    <div>
+      <h1 id="platform-name" style="font-family:'Syne',sans-serif; font-weight:700; font-size:1.6rem; letter-spacing:-0.02em;"></h1>
+      <p style="color:var(--muted); font-size:0.85rem; margin-top:4px;">Estadísticas en tiempo real</p>
+    </div>
+  </div>
+
+  <!-- STATS -->
+  <div class="grid-4">
+    <div class="stat-card">
+      <div class="label">Sesiones totales</div>
+      <div class="value" id="s-total">—</div>
+      <div class="sub">desde el inicio</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Completadas</div>
+      <div class="value" id="s-completed">—</div>
+      <div class="sub" id="s-rate">conversión</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Tus ganancias</div>
+      <div class="value" id="s-earnings">—</div>
+      <div class="sub">acumulado</div>
+    </div>
+    <div class="stat-card">
+      <div class="label">Crédito pagado</div>
+      <div class="value" id="s-paidout">—</div>
+      <div class="sub">a tus usuarios</div>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <!-- TRANSACCIONES -->
+    <div class="card">
+      <h3>Últimas transacciones</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Usuario</th>
+            <th>Generado</th>
+            <th>Tu parte</th>
+            <th>Estado</th>
+          </tr>
+        </thead>
+        <tbody id="tx-table">
+          <tr><td colspan="4" style="text-align:center; padding: 32px 0;">Sin transacciones aún</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <!-- EMBED CODE -->
+    <div class="card">
+      <h3>Tu código de integración</h3>
+      <p style="color:var(--muted); font-size:0.85rem; margin-bottom: 20px; line-height: 1.6;">
+        Pegá este snippet antes del <code style="color:var(--accent)">&lt;/body&gt;</code> de tu sitio. El widget aparece automáticamente.
+      </p>
+      <div class="embed-box" id="embed-code">
+        <button class="copy-embed" onclick="copyEmbed()">Copiar</button>
+        Cargando...
+      </div>
+      <p style="color:var(--muted); font-size:0.8rem; margin-top: 16px;">
+        Luego en tu JS llamá: <code style="color:var(--accent)">AdReward.setUser(userId)</code>
+      </p>
+
+      <div style="margin-top: 24px; padding-top: 24px; border-top: 1px solid var(--border);">
+        <h3 style="margin-bottom: 16px;">Escuchar cuando el usuario cobra</h3>
+        <div class="embed-box">
+          <span style="color:#4a5568">// En tu frontend</span><br>
+          <span style="color:#63b3ed">document</span>.<span style="color:var(--accent)">addEventListener</span>(<span style="color:#f6ad55">'adreward:completed'</span>, (e) => {<br>
+          &nbsp;&nbsp;<span style="color:var(--muted)">// Dar el crédito en tu sistema</span><br>
+          &nbsp;&nbsp;addCredits(e.detail.userId, e.detail.creditAmount);<br>
+          });
+        </div>
+      </div>
+    </div>
+  </div>
+</main>
+
+<script>
+  let currentKey = '';
+  let serverUrl  = 'http://localhost:3000';
+
+  function login() {
+    const key = document.getElementById('platform-key-input').value.trim();
+    if (!key) return;
+    currentKey = key;
+    loadStats();
+  }
+
+  async function loadStats() {
+    if (!currentKey) return;
+
+    try {
+      const res  = await fetch(`${serverUrl}/api/admin/stats/${currentKey}`);
+      const data = await res.json();
+
+      if (!res.ok) {
+        alert('Platform Key no encontrada');
+        return;
+      }
+
+      // Mostrar dashboard
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('dashboard').style.display    = 'block';
+
+      // Poblar datos
+      document.getElementById('platform-name').textContent = data.platform.name;
+      document.getElementById('s-total').textContent       = data.stats.totalSessions;
+      document.getElementById('s-completed').textContent   = data.stats.completedSessions;
+      document.getElementById('s-rate').textContent        = data.stats.conversionRate + ' conversión';
+      document.getElementById('s-earnings').textContent    = data.stats.yourEarnings;
+      document.getElementById('s-paidout').textContent     = data.stats.totalPaidToUsers;
+
+      // Transacciones
+      const tbody = document.getElementById('tx-table');
+      if (data.recentTransactions.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;padding:32px 0;color:var(--muted)">Sin transacciones aún</td></tr>';
+      } else {
+        tbody.innerHTML = data.recentTransactions.map(tx => `
+          <tr>
+            <td>${tx.userId}</td>
+            <td>${tx.totalGenerated.toFixed(4)}</td>
+            <td style="color:var(--accent)">${tx.platformEarned.toFixed(4)}</td>
+            <td><span class="badge success">Completada</span></td>
+          </tr>
+        `).join('');
+      }
+
+      // Embed code
+      const embedHtml = `<span class="tag">&lt;script</span><br>
+  <span class="attr">src</span>="${serverUrl}/widget.js"<br>
+  <span class="attr">data-key</span>="${currentKey}"<br>
+  <span class="attr">data-credit-amount</span>="${data.platform.creditAmount}"<br>
+  <span class="attr">data-currency</span>="${data.platform.currency}"<br>
+  <span class="attr">async</span><br>
+<span class="tag">&gt;&lt;/script&gt;</span>`;
+      document.getElementById('embed-code').innerHTML =
+        `<button class="copy-embed" onclick="copyEmbed()">Copiar</button>${embedHtml}`;
+
+    } catch(err) {
+      alert('Error conectando al servidor. ¿Está corriendo en localhost:3000?');
+    }
+  }
+
+  function copyEmbed() {
+    const code = `<script src="${serverUrl}/widget.js" data-key="${currentKey}" async><\/script>`;
+    navigator.clipboard.writeText(code);
+    document.querySelector('.copy-embed').textContent = '✓ Copiado';
+    setTimeout(() => document.querySelector('.copy-embed').textContent = 'Copiar', 2000);
+  }
+
+  // Enter en el input
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Enter') login();
+  });
+
+  // Auto-refresh cada 30 segundos
+  setInterval(() => { if (currentKey) loadStats(); }, 30000);
+</script>
+
+</body>
+</html>
