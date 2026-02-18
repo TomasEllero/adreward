@@ -16,7 +16,6 @@ const PORT = process.env.PORT || 3000;
 app.use(cors());
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-app.use(express.static(path.join(__dirname, '..', 'public')));
 
 // ─────────────────────────────────────────────
 //  BASE DE DATOS EN MEMORIA
@@ -391,6 +390,9 @@ app.get('/widget.js', (req, res) => {
 
 // Servir el dashboard de demo
 app.use('/dashboard', express.static(path.join(__dirname, '..', 'dashboard')));
+
+// Servir landing page pública
+app.use(express.static(path.join(__dirname, '..', 'public')));
 
 
 // ─────────────────────────────────────────────
