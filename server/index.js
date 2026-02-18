@@ -167,6 +167,7 @@ app.get('/api/widget/init', (req, res) => {
     creditAmount: platform.creditAmount,
     currency: platform.currency,
     bitlabsToken: platform.bitlabsToken || process.env.POLLFISH_API_KEY,
+    cpxAppId: '31502',
     requiredAds: 3,
     message: `Completá ${3} encuestas y ganá $${platform.creditAmount} ${platform.currency}`
   });
@@ -281,6 +282,83 @@ app.get('/api/callback/pollfish', async (req, res) => {
   }
 
   // Pollfish siempre necesita un 200 OK
+  res.status(200).send('OK');
+});
+
+
+// ─────────────────────────────────────────────
+//  CALLBACK DE CPX RESEARCH
+// ─────────────────────────────────────────────
+
+// GET /api/callback/cpx
+app.get('/api/callback/cpx', async (req, res) => {
+  const {
+    user_id: userId,
+    trans_id: transactionId,
+    amount_local: amountLocal,
+    status,
+    subid_1: sessionId,
+    subid_2: platformKey
+  } = req.query;
+
+  console.log(`[CPX CALLBACK] userId=${userId} transId=${transactionId} amount=${amountLocal} status=${status}`);
+
+  // Solo procesar si el status es "1" (completado)
+  if (status !== '1') {
+    console.log(`[CPX] Status ${status} - ignorando`);
+    return res.status(200).send('OK');
+  }
+
+  // Buscar la sesión
+  const session = db.sessions[sessionId];
+  if (!session || session.status === 'rewarded') {
+    return res.status(200).send('OK');
+  }
+
+  // Buscar la plataforma
+  const platform = db.platforms[platformKey || session.platformKey];
+  if (!platform) {
+    return res.status(200).send('OK');
+  }
+
+  // CPX manda el amount en la moneda local (centavos)
+  const rewardUSD = parseFloat(amountLocal) / 100;
+  session.adsCompleted++;
+  session.totalEarned += rewardUSD;
+
+  // Si completó suficientes encuestas, dar el crédito
+  if (session.adsCompleted >= 3) {
+    session.status = 'rewarded';
+    session.completedAt = new Date().toISOString();
+
+    const tx = {
+      id: uuidv4(),
+      sessionId,
+      platformKey: session.platformKey,
+      userId: session.userId,
+      totalGenerated: session.totalEarned,
+      platformEarned: session.totalEarned * platform.revenueShare,
+      adrewardEarned: session.totalEarned * platform.adrewardShare,
+      userCredit: platform.creditAmount,
+      timestamp: new Date().toISOString(),
+      source: 'cpx'
+    };
+    db.transactions.push(tx);
+
+    db.stats[session.platformKey].completedSessions++;
+    db.stats[session.platformKey].totalGenerated += session.totalEarned;
+    db.stats[session.platformKey].totalPaidOut += platform.creditAmount;
+
+    const notified = await notifyPlatform(
+      platform,
+      session.userId,
+      session.sessionToken,
+      session.totalEarned
+    );
+
+    console.log(`[CPX REWARD] Usuario ${userId} completó sesión. Generado: $${session.totalEarned.toFixed(4)} | Notificado: ${notified}`);
+  }
+
   res.status(200).send('OK');
 });
 
