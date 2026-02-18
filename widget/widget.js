@@ -394,6 +394,7 @@
     CONFIG.sessionId    = data.sessionId;
     CONFIG.sessionToken = data.sessionToken;
     CONFIG.bitlabsToken = data.bitlabsToken;
+    CONFIG.cpxAppId     = data.cpxAppId;
     state.requiredAds   = data.requiredAds || 3;
 
     // Actualizar UI con datos del servidor
@@ -423,18 +424,17 @@
       <style>@keyframes ar-spin{to{transform:rotate(360deg)}}</style>
     `;
 
-    // URL del Offer Wall de BitLabs
-    const token = CONFIG.bitlabsToken || CONFIG.platformKey;
-    const bitlabsUrl = `https://web.bitlabs.ai?token=${token}&uid=${encodeURIComponent(CONFIG.userId)}&custom_param_1=${CONFIG.sessionId}&custom_param_2=${CONFIG.platformKey}`;
+    // URL del Offer Wall de CPX Research
+    const cpxUrl = `https://offers.cpx-research.com/index.php?app_id=${CONFIG.cpxAppId}&ext_user_id=${encodeURIComponent(CONFIG.userId)}&subid_1=${CONFIG.sessionId}&subid_2=${CONFIG.platformKey}`;
 
     const iframe = document.createElement('iframe');
-    iframe.src = bitlabsUrl;
+    iframe.src = cpxUrl;
     iframe.style.cssText = 'width:100%;height:100%;border:none;border-radius:12px;display:none;';
     iframe.onload = function() {
       const loader = document.getElementById('ar-iframe-loader');
       if (loader) loader.style.display = 'none';
       iframe.style.display = 'block';
-      console.log('[AdReward] BitLabs cargado');
+      console.log('[AdReward] CPX Research cargado');
     };
 
     iframeWrap.appendChild(iframe);
